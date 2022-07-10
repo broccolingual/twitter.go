@@ -13,5 +13,11 @@ type Media struct {
 	// TODO: public_metrics
 	Width    int
 	Alt_text string
-	// TODO: variants
+	Variants []MediaVariants
+}
+
+type MediaVariants struct {
+	Bit_rate     int
+	Content_type string
+	Url          string
 }
