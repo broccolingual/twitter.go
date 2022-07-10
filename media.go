@@ -1,4 +1,4 @@
-package model
+package main
 
 type Media struct {
 	Media_key   string

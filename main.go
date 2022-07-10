@@ -9,8 +9,6 @@ import (
 	"strconv"
 
 	"github.com/joho/godotenv"
-
-	"github.com/broccolingual/twitter.go/model"
 )
 
 func loadEnv() {
