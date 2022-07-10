@@ -44,20 +44,44 @@ func main() {
 	BEARER_TOKEN = os.Getenv("BEARER_TOKEN")
 
 	endpoint := "https://api.twitter.com/2/tweets/search/recent"
-	query := map[string]interface{}{"query": "valorant", "max_results": 10}
 
-	resp, _ := getRequest(endpoint, query)
+	var next_token string
 
-	tweets, meta := mappingData(resp)
+	tweets := []Tweet{}
 
-	for i, r := range tweets {
-		byte, _ := json.Marshal(r.(map[string]interface{}))
-		tweet := new(Tweet)
-		json.Unmarshal(byte, &tweet)
-		fmt.Println(i, tweet)
+	for i := 0; i < 10; i++ {
+		if i == 0 {
+			query := map[string]interface{}{"query": "valorant", "max_results": 10}
+			resp, _ := getRequest(endpoint, query)
+			data, meta := mappingData(resp)
+
+			for _, r := range data {
+				byte, _ := json.Marshal(r.(map[string]interface{}))
+				tweet := new(Tweet)
+				json.Unmarshal(byte, &tweet)
+				tweets = append(tweets, *tweet)
+			}
+
+			next_token = meta.Next_token
+		} else {
+			query := map[string]interface{}{"query": "valorant", "max_results": 10, "next_token": next_token}
+			resp, _ := getRequest(endpoint, query)
+			data, meta := mappingData(resp)
+
+			for _, r := range data {
+				byte, _ := json.Marshal(r.(map[string]interface{}))
+				tweet := new(Tweet)
+				json.Unmarshal(byte, &tweet)
+				tweets = append(tweets, *tweet)
+			}
+
+			next_token = meta.Next_token
+		}
 	}
 
-	fmt.Println(meta)
+	for i, t := range tweets {
+		fmt.Println(i, t.Id)
+	}
 }
 
 func setHeader(req *http.Request) {
@@ -97,7 +121,6 @@ func showRequestURL(req *http.Request) {
 
 func getRequest(url string, query map[string]interface{}) ([]byte, error) {
 	req := makeRequest(url, query)
-	showRequestURL(req)
 	client := new(http.Client)
 	resp, err := client.Do(req)
 	if err != nil {
@@ -114,11 +137,11 @@ func getRequest(url string, query map[string]interface{}) ([]byte, error) {
 }
 
 func mappingData(body []byte) ([]interface{}, Meta) {
-	var respMap map[string]interface{}
+	var dataMap map[string]interface{}
 	var metaData Meta
-	json.Unmarshal(body, &respMap)
-	dataList := respMap["data"].([]interface{})
-	byte, _ := json.Marshal(respMap["meta"])
+	json.Unmarshal(body, &dataMap)
+	dataList := dataMap["data"].([]interface{})
+	byte, _ := json.Marshal(dataMap["meta"])
 	json.Unmarshal(byte, &metaData)
 	return dataList, metaData
 }
