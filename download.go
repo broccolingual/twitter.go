@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -8,20 +10,29 @@ import (
 	"os"
 	"strings"
 	"sync"
+
+	"golang.org/x/sync/semaphore"
 )
 
 func downloadParallel(urls []string) {
 	var wg sync.WaitGroup
+	var s = semaphore.NewWeighted(50)
 
 	for _, u := range urls {
 		wg.Add(1)
-		go downloadFromURL(u, &wg)
+		go downloadFromURL(u, &wg, s)
 	}
 
 	wg.Wait()
 }
 
-func downloadFromURL(_url string, wg *sync.WaitGroup) {
+func downloadFromURL(_url string, wg *sync.WaitGroup, s *semaphore.Weighted) {
+	defer wg.Done()
+	if err := s.Acquire(context.Background(), 1); err != nil {
+		return
+	}
+	defer s.Release(1)
+
 	u, err := url.Parse(_url)
 	if err != nil {
 		log.Fatal(err)
@@ -39,7 +50,6 @@ func downloadFromURL(_url string, wg *sync.WaitGroup) {
 	}
 	defer resp.Body.Close()
 	size, err := io.Copy(file, resp.Body)
-	size /= 1024
+	fmt.Printf("%s %dKB\n", fileName, size/1024)
 	defer file.Close()
-	wg.Done()
 }

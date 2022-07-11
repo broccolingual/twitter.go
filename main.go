@@ -53,11 +53,11 @@ func main() {
 	// API_SECRET_KEY = os.Getenv("API_SECRET_KEY")
 	// ACCESS_TOKEN = os.Getenv("ACCESS_TOKEN")
 	// ACCESS_TOKEN_SECRET = os.Getenv("ACCESS_TOKEN_SECRET")
-	BEARER_TOKEN = os.Getenv("BEARER_TOKEN")
+	BEARER_TOKEN = os.Getenv("BEARER_TOKEN") // TODO: Bearer Tokenの自動取得
 	MAX_RESULTS := 100
 
 	endpoint := "https://api.twitter.com/2/tweets/search/recent"
-	keyword := `valorant`
+	keyword := `"valorant"`
 
 	var next_token string
 	var elapsed_times [1]time.Duration
@@ -127,7 +127,7 @@ func main() {
 	}
 	fmt.Printf("Elapsed Time: %vs\nGot %d tweets\n", sumTimeDuration.Seconds(), len(tweets))
 
-	downloadParallel(media_urls)
+	// downloadParallel(media_urls)
 }
 
 func setHeader(req *http.Request) {
