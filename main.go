@@ -57,7 +57,7 @@ func main() {
 	MAX_RESULTS := 100
 
 	endpoint := "https://api.twitter.com/2/tweets/search/recent"
-	keyword := `from:ValorantEsports`
+	keyword := `valorant`
 
 	var next_token string
 	var elapsed_times [1]time.Duration
@@ -68,7 +68,7 @@ func main() {
 	for i := 0; i < 1; i++ {
 		now := time.Now()
 		if i == 0 {
-			query := map[string]interface{}{"query": keyword, "max_results": MAX_RESULTS, "tweet.fields": "attachments", "media.fields": "url,variants", "expansions": "attachments.media_keys"}
+			query := map[string]interface{}{"query": keyword, "max_results": MAX_RESULTS, "tweet.fields": "attachments,source,lang,created_at", "media.fields": "url,variants", "expansions": "attachments.media_keys"}
 			resp, _ := getRequest(endpoint, query)
 			ar := mappingData(resp)
 			data := ar.Data
@@ -90,7 +90,7 @@ func main() {
 
 			next_token = meta.Next_token
 		} else {
-			query := map[string]interface{}{"query": keyword, "max_results": MAX_RESULTS, "next_token": next_token, "tweet.fields": "attachments", "media.fields": "url,variants", "expansions": "attachments.media_keys"}
+			query := map[string]interface{}{"query": keyword, "max_results": MAX_RESULTS, "next_token": next_token, "tweet.fields": "attachments,source,lang,created_at", "media.fields": "url,variants", "expansions": "attachments.media_keys"}
 			resp, _ := getRequest(endpoint, query)
 			ar := mappingData(resp)
 			data := ar.Data
@@ -115,9 +115,10 @@ func main() {
 		elapsed_times[i] = time.Since(now)
 	}
 
-	// for i, t := range tweets {
-	// 	fmt.Printf("%d: %s\nMedia Keys: %s\n\n", i, t.Id, t.Attachments.Media_keys)
-	// }
+	for i, t := range tweets {
+		dt, _ := time.Parse(time.RFC3339, t.Created_at)
+		fmt.Printf("%d: %s\nSource: %s, %s\n%s\n\n", i, t.Id, t.Source, t.Lang, dt)
+	}
 
 	var sumTimeDuration time.Duration
 	for i, t := range elapsed_times {

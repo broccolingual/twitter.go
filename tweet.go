@@ -1,7 +1,5 @@
 package main
 
-import "time"
-
 type Tweet struct {
 	Id          string
 	Text        string
@@ -9,7 +7,7 @@ type Tweet struct {
 	Author_id   string
 	// TODO: context_annotations
 	Conversation_id string
-	Created_at      time.Time
+	Created_at      string
 	// TODO: entities
 	Geo                 TweetGeo
 	In_reply_to_user_id string
