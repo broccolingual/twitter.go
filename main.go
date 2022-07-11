@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -29,29 +30,33 @@ type Meta struct {
 	Next_token   string
 }
 
-var API_KEY string
-var API_SECRET_KEY string
-var ACCESS_TOKEN string
-var ACCESS_TOKEN_SECRET string
+// var API_KEY string
+// var API_SECRET_KEY string
+// var ACCESS_TOKEN string
+// var ACCESS_TOKEN_SECRET string
 var BEARER_TOKEN string
 
 func main() {
 	loadEnv()
-	API_KEY = os.Getenv("API_KEY")
-	API_SECRET_KEY = os.Getenv("API_SECRET_KEY")
-	ACCESS_TOKEN = os.Getenv("ACCESS_TOKEN")
-	ACCESS_TOKEN_SECRET = os.Getenv("ACCESS_TOKEN_SECRET")
+	// API_KEY = os.Getenv("API_KEY")
+	// API_SECRET_KEY = os.Getenv("API_SECRET_KEY")
+	// ACCESS_TOKEN = os.Getenv("ACCESS_TOKEN")
+	// ACCESS_TOKEN_SECRET = os.Getenv("ACCESS_TOKEN_SECRET")
 	BEARER_TOKEN = os.Getenv("BEARER_TOKEN")
+	MAX_RESULTS := 100
 
 	endpoint := "https://api.twitter.com/2/tweets/search/recent"
+	keyword := "valorant"
 
 	var next_token string
+	var elapsed_times [10]time.Duration
 
 	tweets := []Tweet{}
 
 	for i := 0; i < 10; i++ {
+		now := time.Now()
 		if i == 0 {
-			query := map[string]interface{}{"query": "valorant", "max_results": 10}
+			query := map[string]interface{}{"query": keyword, "max_results": MAX_RESULTS, "tweet.fields": "attachments,author_id,context_annotations,created_at,entities,geo,id,in_reply_to_user_id,lang,possibly_sensitive,public_metrics,referenced_tweets,source,text,withheld"}
 			resp, _ := getRequest(endpoint, query)
 			data, meta := mappingData(resp)
 
@@ -64,7 +69,7 @@ func main() {
 
 			next_token = meta.Next_token
 		} else {
-			query := map[string]interface{}{"query": "valorant", "max_results": 10, "next_token": next_token}
+			query := map[string]interface{}{"query": keyword, "max_results": MAX_RESULTS, "next_token": next_token, "tweet.fields": "attachments,author_id,context_annotations,created_at,entities,geo,id,in_reply_to_user_id,lang,possibly_sensitive,public_metrics,referenced_tweets,source,text,withheld"}
 			resp, _ := getRequest(endpoint, query)
 			data, meta := mappingData(resp)
 
@@ -77,11 +82,19 @@ func main() {
 
 			next_token = meta.Next_token
 		}
+		elapsed_times[i] = time.Since(now)
 	}
 
 	for i, t := range tweets {
-		fmt.Println(i, t.Id)
+		fmt.Printf("%d: %s %s\nMedia Keys: %s, Sensitive: %s\n\n", i, t.Id, t.Lang, t.Attachments.Media_keys, t.Possibly_sensitive)
 	}
+
+	var sumTimeDuration time.Duration
+	for i, t := range elapsed_times {
+		fmt.Printf("Req %d: %vs\n", i, t.Seconds())
+		sumTimeDuration += t
+	}
+	fmt.Printf("Elapsed Time: %vs\n", sumTimeDuration.Seconds())
 }
 
 func setHeader(req *http.Request) {
@@ -141,6 +154,9 @@ func mappingData(body []byte) ([]interface{}, Meta) {
 	var metaData Meta
 	json.Unmarshal(body, &dataMap)
 	dataList := dataMap["data"].([]interface{})
+	if v, ok := dataMap["includes"]; ok {
+		fmt.Println(v.([]interface{}))
+	}
 	byte, _ := json.Marshal(dataMap["meta"])
 	json.Unmarshal(byte, &metaData)
 	return dataList, metaData
