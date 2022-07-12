@@ -56,7 +56,7 @@ func main() {
 	BEARER_TOKEN = os.Getenv("BEARER_TOKEN") // TODO: Bearer Tokenの自動取得
 	MAX_RESULTS := 100
 
-	endpoint := "https://api.twitter.com/2/tweets/search/recent"
+	endpoint := getEndpointCountRecentTweets()
 	keyword := `"valorant"`
 
 	var next_token string
@@ -125,9 +125,12 @@ func main() {
 		fmt.Printf("Req %d: %vs\n", i, t.Seconds())
 		sumTimeDuration += t
 	}
-	fmt.Printf("Elapsed Time: %vs\nGot %d tweets\n", sumTimeDuration.Seconds(), len(tweets))
+	now := time.Now()
+	downloadParallel(media_urls)
+	elapsed_time := time.Since(now)
 
-	// downloadParallel(media_urls)
+	fmt.Printf("Elapsed Time(Request): %vs\nGot %d tweets\n", sumTimeDuration.Seconds(), len(tweets))
+	fmt.Printf("Elapsed Time(Download): %vs\nDownloaded %d files\n", elapsed_time.Seconds(), len(media_urls))
 }
 
 func setHeader(req *http.Request) {
