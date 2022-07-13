@@ -69,8 +69,8 @@ func getEndpointBookmarks(user_id string) string {
 	return fmt.Sprintf("%s/2/users/%s/bookmarks", ENDPOINT_BASE, user_id)
 }
 
-func getEndpointUsersByIDs() string {
-	return fmt.Sprintf("%s/2/users", ENDPOINT_BASE)
+func getEndpointUsersByIDs(user_ids []string) string {
+	return fmt.Sprintf("%s/2/users?ids=%s", ENDPOINT_BASE, strings.Join(user_ids, ","))
 }
 
 func getEndpointUserByID(user_id string) string {
