@@ -14,6 +14,10 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
+
+
+	"github.com/broccolingual/twitter.go/model"
+	"github.com/broccolingual/twitter.go/endpoint"
 )
 
 type error interface {
@@ -28,8 +32,8 @@ type Meta struct {
 }
 
 type Includes struct {
-	Media []Media
-	Tweet []Tweet
+	Media []model.Media
+	Tweet []model.Tweet
 }
 
 type ApiResponse struct {
@@ -52,15 +56,18 @@ func main() {
 	// var s = semaphore.NewWeighted(10)
 
 	const MAX_RESULTS = 100
-	const NUM_OF_LOOP = 100
+	const NUM_OF_LOOP = 1
 
-	endpoint := getEndpointSearchRecentTweets()
+	_endpoint := endpoint.GetEndpointSearchRecentTweets()
+	if len(os.Args) != 2 {
+		log.Fatal("need search keyword as args")
+	}
 	keyword := os.Args[1]
 
 	var next_token string = ""
 	var elapsed_times [NUM_OF_LOOP]time.Duration
 
-	tweets := []Tweet{}
+	tweets := []model.Tweet{}
 	tweet_user_ids := []string{}
 	m_cnt := 0
 
@@ -70,7 +77,7 @@ func main() {
 		if next_token != "" {
 			query["next_token"] = next_token
 		}
-		resp, _ := getRequest(endpoint, query)
+		resp, _ := getRequest(_endpoint, query)
 		ar := mappingData(resp)
 		data := ar.Data
 		meta := ar.Meta
@@ -86,7 +93,7 @@ func main() {
 
 		for _, r := range data {
 			byte, _ := json.Marshal(r.(map[string]interface{}))
-			tweet := new(Tweet)
+			tweet := new(model.Tweet)
 			json.Unmarshal(byte, &tweet)
 			if tweet.Lang == "ja" {
 				tweets = append(tweets, *tweet)
@@ -149,15 +156,15 @@ func main() {
 		cnt++
 	}
 
-	users := []User{}
-	u_endpoint := getEndpointUsersByIDs(h_l)
+	users := []model.User{}
+	u_endpoint := endpoint.GetEndpointUsersByIDs(h_l)
 	query := map[string]interface{}{}
 	resp, _ := getRequest(u_endpoint, query)
 	ar := mappingData(resp)
 	data := ar.Data
 	for _, r := range data {
 		byte, _ := json.Marshal(r.(map[string]interface{}))
-		user := new(User)
+		user := new(model.User)
 		json.Unmarshal(byte, &user)
 		users = append(users, *user)
 	}
