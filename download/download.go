@@ -1,4 +1,4 @@
-package main
+package download
 
 import (
 	"context"
@@ -14,19 +14,7 @@ import (
 	"golang.org/x/sync/semaphore"
 )
 
-func downloadParallel(urls []string) {
-	var wg sync.WaitGroup
-	var s = semaphore.NewWeighted(50)
-
-	for _, u := range urls {
-		wg.Add(1)
-		go downloadFromURL(u, &wg, s)
-	}
-
-	wg.Wait()
-}
-
-func downloadFromURL(_url string, wg *sync.WaitGroup, s *semaphore.Weighted) {
+func DownloadFromURL(_url string, wg *sync.WaitGroup, s *semaphore.Weighted) {
 	defer wg.Done()
 	if err := s.Acquire(context.Background(), 1); err != nil {
 		return

@@ -14,10 +14,11 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
-
+	"golang.org/x/sync/semaphore"
 
 	"github.com/broccolingual/twitter.go/model"
 	"github.com/broccolingual/twitter.go/endpoint"
+	"github.com/broccolingual/twitter.go/download"
 )
 
 type error interface {
@@ -53,7 +54,7 @@ func main() {
 
 	// goroutine settings
 	var wg sync.WaitGroup
-	// var s = semaphore.NewWeighted(10)
+	var s = semaphore.NewWeighted(10)
 
 	const MAX_RESULTS = 100
 	const NUM_OF_LOOP = 1
@@ -81,15 +82,15 @@ func main() {
 		ar := mappingData(resp)
 		data := ar.Data
 		meta := ar.Meta
-		// includes := ar.Includes
+		includes := ar.Includes
 
-		// for _, m := range includes.Media {
-		// 	if m.Url != "" && m.Type == "photo" {
-		// 		wg.Add(1)
-		// 		go downloadFromURL(m.Url, &wg, s)
-		// 		m_cnt++
-		// 	}
-		// }
+		for _, m := range includes.Media {
+			if m.Url != "" && m.Type == "photo" {
+				wg.Add(1)
+				go download.DownloadFromURL(m.Url, &wg, s)
+				m_cnt++
+			}
+		}
 
 		for _, r := range data {
 			byte, _ := json.Marshal(r.(map[string]interface{}))
@@ -106,10 +107,10 @@ func main() {
 		elapsed_times[i] = time.Since(now)
 	}
 
-	// for i, t := range tweets {
-	// 	dt, _ := time.Parse(time.RFC3339, t.Created_at)
-	// 	fmt.Printf("%d: %s\nSource: %s, %s\n%s\n\n", i, t.Id, t.Source, t.Lang, dt)
-	// }
+	for i, t := range tweets {
+		dt, _ := time.Parse(time.RFC3339, t.Created_at)
+		fmt.Printf("%d: %s\nSource: %s, %s\n%s\n\n", i, t.Id, t.Source, t.Lang, dt)
+	}
 
 	var sumTimeDuration time.Duration
 	for _, t := range elapsed_times {
